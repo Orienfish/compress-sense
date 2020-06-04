@@ -81,7 +81,7 @@ s = 5;                      % sparsity level
 n = 20;                     % length of signal
 delta = 0.01;                % approximation level of using CVX
 rou = 0.4;                  % flip probability in the noise model
-C = 0.006;                    % constant in determine the lower bound of m
+C = 0.01;                    % constant in determine the lower bound of m
 m = ceil(C * delta^(-2) * (rou - 0.5)^(-2) * ...
     s * log(2*n/s));        % required observation number
 %lambda = 2 * sqrt(2 / pi) * (rou - 0.5);    % lambda for the noise model
@@ -120,3 +120,5 @@ cvx_begin
         norm( x_p ) <= 1
 cvx_end
 err_cvx = norm(x - x_p)^2;
+fprintf('theoretical error bound: %f\nexperimental error: %f\n', ...
+    delta, err_cvx);
