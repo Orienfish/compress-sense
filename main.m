@@ -130,8 +130,114 @@ end
 
 %% call DC for active learning
 h = x(1:2);
-prob.st = 0.0;
-prob.ed = 2 * pi;
-prob.p = 1 / (2 * pi);
-prob_dict = [prob];
+prob_list = dlnode([0.0, 2*pi, 1/(2*pi)]);
+len_list = 1;
 T = T_bound(epsilon, delta, rou);
+% start querying
+for m=1:T
+    theta = eq_divide(prob_list, len_list);
+    if theta > pi
+        theta = theta - pi; % normalize to (0, pi]
+    end
+    % find the orthogonal direction
+    % add randomness to equally distribute the queries
+    % theta_m locates in (-pi/2, 3pi/2]
+    if rand() < 0.5
+        theta_m = theta + pi/2;
+    else
+        theta_m = theta - pi/2;
+    end
+    
+    % find the point on the unit sphere and query its corrupted sign
+    x_m = [cos(theta_m), sin(theta_m)];
+    query = sign(x_m * h);
+    if rand() < rou
+        query = query * (-1);
+    end
+    if query > 0
+        w1 = 2 * (1 - rou); % update weight for R_plus
+        w2 = 2 * rou;       % update weight for R_minus
+    else
+        w1 = 2 * rou;
+        w2 = 2 * (1 - rou);
+    end
+    
+    % update the probability dictionary
+    R_plus_lb = theta_m - pi/2; % (-pi, pi]
+    R_plus_ub = theta_m + pi/2; % (0, 2pi] 
+    % add two new segments
+    [prob_list, len_list] = add_node(prob_list, len_list, R_plus_lb);
+    [prob_list, len_list] = add_node(prob_list, len_list, R_plus_ub);
+    % update the probability
+    prob_list = update_prob(prob_list, len_list, R_plus_lb, R_plus_ub, w1, w2);
+end
+
+% end of main routine
+
+function theta = eq_divide(prob_list, len_list)
+    % accumulate the current probability until surpasses 0.5
+    node = prob_list;
+    cur_prob = 0.0;
+    cur_idx = 1;
+    while cur_idx <= len_list
+        cur_prob = cur_prob + node.Data(3) * (node.Data(2) - node.Data(1));
+        if cur_prob >= 0.5
+            break;
+        end
+        node = node.Next;
+        cur_idx = cur_idx + 1;
+    end
+    % now we know the division takes place on segment cur_idx
+    % we substract the surpassing probability and get the desired theta
+    theta = node.Data(2) - (cur_prob - 0.5) / node.Data(3);
+end
+
+% add another angle into the list
+function [new_list, new_len] = add_node(prob_list, len_list, angle)
+    node = prob_list;
+    cur_idx = 1;
+    while cur_idx <= len_list
+        if node.Data(1) == angle
+            break; % no new node to add
+        end
+        if node.Data(1) < angle && node.Data(2) > angle
+            newnode = dlnode([angle, node.Data(2), node.Data(3)]);
+            node.Data(2) = angle;
+            newnode.insertAfter(node);
+            len_list = len_list + 1;
+            break;
+        end
+        node = node.Next;
+        cur_idx = cur_idx + 1;
+    end
+    new_list = prob_list;
+    new_len = len_list;
+end
+
+function new_list = update_prob(prob_list, len_list, lb, ub, w1, w2)
+    node = prob_list;
+    cur_idx = 1;
+    while cur_idx <= len_list
+        if lb >= 0
+            if node.Data(1) >= lb && node.Data(2) <= ub
+                % update R_plus
+                node.Data(3) = node.Data(3) * w1;
+            else
+                % update R_minus
+                node.Data(3) = node.Data(3) * w2;
+            end
+        else % R_plus of [lb, ub] overlaps the zero
+            lb = lb + 2*pi;
+            if node.Data(1) >= lb || node.Data(2) <= ub
+                % update R_plus
+                node.Data(3) = node.Data(3) * w1;
+            else
+                % update R_minus
+                node.Data(3) = node.Data(3) * w2;
+            end
+        end
+        node = node.Next;
+        cur_idx = cur_idx + 1;
+    end
+    new_list = prob_list;
+end
