@@ -62,7 +62,7 @@ function h_theta = DC2(h, K, epsilon, delta, rou, debug)
         total_prob = get_total_prob(prob_list, len_list);
         theta = eq_divide(prob_list, len_list, total_prob);
         if debug
-            fprintf('total probability is %.10f\n', cur_prob);
+            fprintf('total probability is %.10f\n', total_prob);
             display(prob_list, len_list);
             fprintf('theta original: %f degrees\n', theta*180/pi);
         end
