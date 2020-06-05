@@ -132,9 +132,11 @@ end
 h = x(1:2);
 prob_list = dlnode([0.0, 2*pi, 1/(2*pi)]);
 len_list = 1;
-T = T_bound(epsilon, delta, rou);
+%T = T_bound(epsilon, delta, rou);
+T = 2;
 % start querying
 for m=1:T
+    display(prob_list, len_list)
     theta = eq_divide(prob_list, len_list);
     if theta > pi
         theta = theta - pi; % normalize to (0, pi]
@@ -240,4 +242,14 @@ function new_list = update_prob(prob_list, len_list, lb, ub, w1, w2)
         cur_idx = cur_idx + 1;
     end
     new_list = prob_list;
+end
+
+function display(prob_list, len_list)
+    node = prob_list;
+    cur_idx = 1;
+    while cur_idx <= len_list
+        disp([cur_idx, node.Data]);
+        node = node.Next;
+        cur_idx = cur_idx + 1;
+    end
 end
