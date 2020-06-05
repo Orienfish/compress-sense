@@ -117,21 +117,22 @@ for i=1:m
 end
 
 % call CVX
-%cvx_begin
-%    variable x_p(n)
-%    maximize( y_c' * A * x_p )
-%    subject to
-%        abs( x_p ) <= sqrt(s)
-%        norm( x_p ) <= 1
-%cvx_end
-%err_cvx = norm(x - x_p)^2;
-%fprintf('theoretical error bound: %f\nexperimental error: %f\n', ...
-%    epsilon, err_cvx);
+cvx_begin
+    variable x_p(n)
+    maximize( y_c' * A * x_p )
+    subject to
+        abs( x_p ) <= sqrt(s)
+        norm( x_p ) <= 1
+cvx_end
+err_cvx = norm(x - x_p)^2;
+fprintf('theoretical error bound: %f\nexperimental error: %f\n', ...
+    epsilon, err_cvx);
 
 %% call DC for active learning
 h = x;              % the hyperplane to be learned
 K = 4;              % linear constant to calculate query times
-h_p = DC(h, K, epsilon, delta, rou);
+debug = false;      % debug flag
+h_p = DC(h, K, epsilon, delta, rou, debug);
 err_dc = norm(h - h_p)^2;
 fprintf('theoretical error bound: %f\nexperimental error: %f\n', epsilon, ...
     err_dc);
