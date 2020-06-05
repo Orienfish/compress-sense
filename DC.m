@@ -33,10 +33,7 @@ for j=1:h_cnt-1
     
     h_theta = DC2([h1; h2], K, epsilon, delta, rou, debug);
     if debug; fprintf('h_theta: %.10f\n', h_theta*180/pi); end
-    if h_theta == Inf
-        fprintf('total probability in DC2 becomes invalid! reduce T!\n');
-        break;
-    end
+    
     h_p(j) = h_norm * cos(h_theta);
     h_norm = h_norm * sin(h_theta);
     if debug
@@ -52,7 +49,6 @@ function h_theta = DC2(h, K, epsilon, delta, rou, debug)
     % create the node list for the ring
     prob_list = dlnode([0.0, 2*pi, 1/(2*pi)]);
     len_list = 1;
-    h_theta = Inf;
     % calculate the query times
     T = ceil(K * (log(1/epsilon) + log(1/delta)));
     if debug; fprintf('T: %d\n', T); end
@@ -66,9 +62,7 @@ function h_theta = DC2(h, K, epsilon, delta, rou, debug)
             display(prob_list, len_list);
             fprintf('theta original: %f degrees\n', theta*180/pi);
         end
-        if theta == Inf
-            return;             % return false, the total probability becomes invalid
-        elseif theta > pi
+        if theta > pi
             theta = theta - pi; % normalize to (0, pi]
         end
         % find the orthogonal direction
@@ -132,13 +126,9 @@ function theta = eq_divide(prob_list, len_list, total_prob)
         node = node.Next;
         cur_idx = cur_idx + 1;
     end
-    if cur_idx > len_list
-        theta = Inf;
-    else
-        % now we know the division takes place on segment cur_idx
-        % we substract the surpassing probability and get the desired theta
-        theta = node.Data(2) - (cur_prob - 0.5) / node.Data(3);
-    end
+    % now we know the division takes place on segment cur_idx
+    % we substract the surpassing probability and get the desired theta
+    theta = node.Data(2) - (cur_prob - 0.5) / node.Data(3);
 end
 
 % add another angle into the list
