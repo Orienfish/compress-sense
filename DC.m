@@ -4,13 +4,13 @@
 %   K: linear constant to calculate query times
 %   epsilon: desired error bound
 %   delta: desired probability of 1-delta
-%   rou: flip probability
+%   rho: flip probability
 %   debug: the debug flag
 %
 % Return:
 %   h_p: the estimated hyperplane
 
-function h_p = DC(h, K, epsilon, delta, rou, debug)
+function h_p = DC(h, K, epsilon, delta, rho, debug)
 h_cnt = length(h);
 h_p = zeros(h_cnt, 1);
 h_norm = 1.0;
@@ -31,7 +31,7 @@ for j=1:h_cnt-1
         h2 = norm(e2 .* h);
     end
     
-    h_theta = DC2([h1; h2], K, epsilon, delta, rou, debug);
+    h_theta = DC2([h1; h2], K, epsilon, delta, rho, debug);
     if debug; fprintf('h_theta: %.10f\n', h_theta*180/pi); end
     
     h_p(j) = h_norm * cos(h_theta);
@@ -45,7 +45,7 @@ h_p(end) = h_norm;
 end
 
 % DC2 to estimate h: 1*2
-function h_theta = DC2(h, K, epsilon, delta, rou, debug)
+function h_theta = DC2(h, K, epsilon, delta, rho, debug)
     % create the node list for the ring
     prob_list = dlnode([0.0, 2*pi, 1/(2*pi)]);
     len_list = 1;
@@ -78,15 +78,15 @@ function h_theta = DC2(h, K, epsilon, delta, rou, debug)
         % find the point on the unit sphere and query its corrupted sign
         x_m = [cos(theta_m), sin(theta_m)];
         query = sign(x_m * h);
-        if rand() < rou
+        if rand() < rho
             query = query * (-1);
         end
         if query >= 0
-            w1 = 2 * (1 - rou); % update weight for R_plus
-            w2 = 2 * rou;       % update weight for R_minus
+            w1 = 2 * (1 - rho); % update weight for R_plus
+            w2 = 2 * rho;       % update weight for R_minus
         else
-            w1 = 2 * rou;
-            w2 = 2 * (1 - rou);
+            w1 = 2 * rho;
+            w2 = 2 * (1 - rho);
         end
         if debug
             fprintf('query: %d\n', query);
