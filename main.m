@@ -7,11 +7,13 @@ warning('off','all');
 %% Initialize the problem and solve with CVX
 % fundamental parameters
 %s = 5;                      % sparsity level
-s_list = [1, 5, 10, 15, 20];
-times = 50;                % test times
+s_list = [1, 5, 10, 15, 20, 25];
+times = 1000;                % test times
 err_mat_cvx = Inf(length(s_list), times);
 err_mat_dc = Inf(length(s_list), times);
 
+n = 25;                     % length of signal
+rho = 0.1;                  % flip probability in the noise model
 epsilon = 0.01;             % desired error bound
 c = 50.0;                   % constant in determine the lower bound of m
 C = 0.01;                   % constant in determine the upper bound of m
@@ -19,8 +21,6 @@ C = 0.01;                   % constant in determine the upper bound of m
 
 for i = 1:length(s_list)
     s = s_list(i);              % sparsity level
-    n = 20;                     % length of signal
-    rho = 0.1;                  % flip probability in the noise model
 
     % ramdomly generate the s-sparse signal with length n
     comb = combnk(1:n, s);
